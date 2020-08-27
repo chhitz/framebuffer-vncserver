@@ -10,5 +10,8 @@ INSTALL(TARGETS framebuffer-vncserver RUNTIME DESTINATION bin)
 find_library(LIBVNC NAMES libvncserver vncserver)
 target_link_libraries(framebuffer-vncserver ${LIBVNC})
 
+find_library(LIBRT rt REQUIRED)
+target_link_libraries(framebuffer-vncserver ${LIBRT})
+
 
 MESSAGE( STATUS "LIBVNC:         " ${LIBVNC} )

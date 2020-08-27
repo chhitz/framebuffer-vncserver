@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <linux/input.h>
+#include <sys/mman.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -48,11 +49,11 @@
 #define SAMPLES_PER_PIXEL 2
 
 static char fb_device[256] = "/dev/fb0";
+static char shm_device[256] = "/usr-gui";
 static char touch_device[256] = "";
 static char kbd_device[256] = "";
 
 static struct fb_var_screeninfo scrinfo;
-static int fbfd = -1;
 static unsigned short int *fbmmap = MAP_FAILED;
 static unsigned short int *vncbuf;
 static unsigned short int *fbbuf;
@@ -87,6 +88,14 @@ static struct varblock_t
 static void init_fb(void)
 {
     size_t pixels;
+    int fbfd = -1;
+    int shmfd = -1;
+    
+    if ((shmfd = shm_open(shm_device, O_RDWR /*| O_CREAT*/, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) == -1)
+    {
+        error_print("cannot open shared memory %s\n", shm_device);
+        exit(EXIT_FAILURE);
+    }
 
     if ((fbfd = open(fb_device, O_RDONLY)) == -1)
     {
@@ -99,6 +108,7 @@ static void init_fb(void)
         error_print("ioctl error\n");
         exit(EXIT_FAILURE);
     }
+    close(fbfd);
 
     pixels = scrinfo.xres * scrinfo.yres;
     bytespp = scrinfo.bits_per_pixel / 8;
@@ -115,7 +125,14 @@ static void init_fb(void)
                (int)scrinfo.green.offset, (int)scrinfo.green.length,
                (int)scrinfo.blue.offset, (int)scrinfo.blue.length);
 
-    fbmmap = mmap(NULL, frame_size, PROT_READ, MAP_SHARED, fbfd, 0);
+    ftruncate(shmfd, frame_size);
+    struct stat statbuf;
+    fstat(shmfd, &statbuf);
+    info_print("shm size: %d\n", (int)statbuf.st_size);
+
+    fbmmap = mmap(NULL, frame_size, PROT_READ, MAP_SHARED, shmfd, 0);
+
+    close(shmfd);
 
     if (fbmmap == MAP_FAILED)
     {
@@ -126,10 +143,10 @@ static void init_fb(void)
 
 static void cleanup_fb(void)
 {
-    if (fbfd != -1)
+    if (fbmmap != MAP_FAILED)
     {
-        close(fbfd);
-        fbfd = -1;
+        munmap(fbmmap, frame_size);
+        fbmmap = MAP_FAILED;
     }
 }
 
