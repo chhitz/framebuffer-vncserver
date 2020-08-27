@@ -52,6 +52,7 @@ static char fb_device[256] = "/dev/fb0";
 static char shm_device[256] = "/usr-gui";
 static char touch_device[256] = "";
 static char kbd_device[256] = "";
+static char hostname[128];
 
 static struct fb_var_screeninfo scrinfo;
 static unsigned short int *fbmmap = MAP_FAILED;
@@ -221,8 +222,9 @@ static void init_fb_server(int argc, char **argv, rfbBool enable_touch)
     server = rfbGetScreen(&argc, argv, scrinfo.xres, scrinfo.yres, BITS_PER_SAMPLE, SAMPLES_PER_PIXEL, rbytespp);
     assert(server != NULL);
 
-    server->desktopName = "framebuffer";
-    server->frameBuffer = (char *)vncbuf;
+    gethostname(hostname, sizeof(hostname));
+    server->desktopName = hostname;
+    server->frameBuffer = (char*)fbmmap;
     server->alwaysShared = TRUE;
     server->httpDir = NULL;
     server->port = vnc_port;
