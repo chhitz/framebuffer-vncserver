@@ -45,7 +45,7 @@
 /*****************************************************************************/
 #define LOG_FPS
 
-#define BITS_PER_SAMPLE 5
+#define BITS_PER_SAMPLE 8
 #define SAMPLES_PER_PIXEL 2
 
 static char fb_device[256] = "/dev/fb0";
@@ -383,7 +383,6 @@ static void update_screen(void)
     {
         uint32_t *f = (uint32_t *)fbmmap; /* -> framebuffer         */
         uint32_t *c = (uint32_t *)fbbuf;  /* -> compare framebuffer */
-        uint32_t *r = (uint32_t *)vncbuf; /* -> remote framebuffer  */
 
         if (memcmp(fbmmap, fbbuf, frame_size) != 0)
         {
@@ -398,40 +397,9 @@ static void update_screen(void)
                 int x;
                 for (x = 0; x < (int)scrinfo.xres; x += xstep)
                 {
-                    uint32_t pixel = *f;
-
-                    if (pixel != *c)
+                    if (*f != *c)
                     {
-                        *c = pixel;
-
-#if 0
-                /* XXX: Undo the checkered pattern to test the efficiency
-                 * gain using hextile encoding. */
-                if (pixel == 0x18e320e4 || pixel == 0x20e418e3)
-                    pixel = 0x18e318e3;
-#endif
-                        if (bytespp == 4)
-                        {
-                            *r = PIXEL_FB_TO_RFB(pixel,
-                                                 varblock.r_offset, varblock.g_offset, varblock.b_offset);
-                        }
-                        else if (bytespp == 2)
-                        {
-                            *r = PIXEL_FB_TO_RFB(pixel,
-                                                 varblock.r_offset, varblock.g_offset, varblock.b_offset);
-
-                            uint32_t high_pixel = (0xffff0000 & pixel) >> 16;
-                            uint32_t high_r = PIXEL_FB_TO_RFB(high_pixel, varblock.r_offset, varblock.g_offset, varblock.b_offset);
-                            *r |= (0xffff & high_r) << 16;
-                        }
-                        else if (bytespp == 1)
-                        {
-                            *r = pixel;
-                        }
-                        else
-                        {
-                            // TODO
-                        }
+                        *c = *f;
 
                         int x2 = x + xstep - 1;
                         if (x < varblock.min_i)
@@ -447,7 +415,6 @@ static void update_screen(void)
 
                     f++;
                     c++;
-                    r++;
                 }
             }
         }
