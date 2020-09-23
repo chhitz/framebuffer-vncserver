@@ -111,6 +111,7 @@ static void init_fb(void)
     }
     close(fbfd);
 
+    scrinfo.bits_per_pixel = 32; // S6-1376: fix bpp to 32 as /dev/fb0 can not be configured correctly
     pixels = scrinfo.xres * scrinfo.yres;
     bytespp = scrinfo.bits_per_pixel / 8;
     bits_per_pixel = scrinfo.bits_per_pixel;
