@@ -226,7 +226,6 @@ static void init_fb_server(int argc, char **argv, rfbBool enable_touch)
     server->desktopName = hostname;
     server->frameBuffer = (char*)fbmmap;
     server->alwaysShared = TRUE;
-    server->httpDir = NULL;
     server->port = vnc_port;
 
     server->kbdAddEvent = keyevent;
@@ -555,42 +554,44 @@ int main(int argc, char **argv)
         int i = 1;
         while (i < argc)
         {
-            if (*argv[i] == '-')
+            if (strcmp(argv[i], "-h") == 0)
             {
-                switch (*(argv[i] + 1))
-                {
-                case 'h':
-                    print_usage(argv);
-                    exit(0);
-                    break;
-                case 'f':
-                    i++;
-                    if (argv[i])
-                        strcpy(fb_device, argv[i]);
-                    break;
-                case 't':
-                    i++;
-                    if (argv[i])
-                        strcpy(touch_device, argv[i]);
-                    break;
-                case 'k':
-                    i++;
-                    strcpy(kbd_device, argv[i]);
-                    break;
-                case 'p':
-                    i++;
-                    if (argv[i])
-                        vnc_port = atoi(argv[i]);
-                    break;
-                case 'r':
-                    i++;
-                    if (argv[i])
-                        vnc_rotate = atoi(argv[i]);
-                    break;
-                case 'v':
-                    verbose = 1;
-                    break;
-                }
+                print_usage(argv);
+                exit(0);
+            }
+            else if (strcmp(argv[i], "-f") == 0)
+            {
+                i++;
+                if (argv[i])
+                    strcpy(fb_device, argv[i]);
+            }
+            else if (strcmp(argv[i], "-t") == 0)
+            {
+                i++;
+                if (argv[i])
+                    strcpy(touch_device, argv[i]);
+            }
+            else if (strcmp(argv[i], "-k") == 0)
+            {
+                i++;
+                strcpy(kbd_device, argv[i]);
+            }
+            else if (strcmp(argv[i], "-p") == 0)
+            {
+                i++;
+                if (argv[i])
+                    vnc_port = atoi(argv[i]);
+            }
+            else if (strcmp(argv[i], "-r") == 0)
+            {
+                i++;
+                if (argv[i])
+                    vnc_rotate = atoi(argv[i]);
+            }
+            else if (strcmp(argv[i], "-v") == 0)
+            {
+                verbose = 1;
+                break;
             }
             i++;
         }
